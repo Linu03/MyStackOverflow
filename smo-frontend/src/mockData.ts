@@ -96,6 +96,20 @@ const questions: Question[] = [
       },
     ],
   },
+  {
+    id: 'q4',
+    title: 'How do I implement user authentication with JWT tokens in a Node.js Express application?',
+    description: 'I need to add secure login functionality to my web app using JSON Web Tokens for session management.',
+    author_id: 'u6',
+    is_solved: false,
+    allow_ai_companion: true,
+    vote_count: 12,
+    created_at: '2026-05-11T10:30:00Z',
+    author: { id: 'u6', username: 'backend_dev' },
+    question_tags: [{ tag: { name: 'nodejs' } }, { tag: { name: 'authentication' } }, { tag: { name: 'jwt' } }],
+    answers: [],
+    comments: [],
+  },
 ]
 
 export default questions
