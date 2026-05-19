@@ -9,7 +9,7 @@ export interface QuestionTag{
 
 export interface QuestionSummary {
     id: string;
-    titile: string;
+    title: string;
     is_solved: boolean;
     vote_count: number;
     created_at: string;

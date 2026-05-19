@@ -1,59 +1,21 @@
-import { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Home from './pages/Home'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
+import QuestionDetails from './pages/QuestionDetails'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home')
-
-  useEffect(() => {
-    const path = window.location.pathname
-    if (path === '/sign-in') {
-      setCurrentPage('sign-in')
-    } else if (path === '/sign-up') {
-      setCurrentPage('sign-up')
-    } else {
-      setCurrentPage('home')
-    }
-  }, [])
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname
-      if (path === '/sign-in') {
-        setCurrentPage('sign-in')
-      } else if (path === '/sign-up') {
-        setCurrentPage('sign-up')
-      } else {
-        setCurrentPage('home')
-      }
-    }
-
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
-
-  const navigate = (page: string) => {
-    if (page === 'home') {
-      window.history.pushState({}, '', '/')
-    } else if (page === 'sign-in') {
-      window.history.pushState({}, '', '/sign-in')
-    } else if (page === 'sign-up') {
-      window.history.pushState({}, '', '/sign-up')
-    }
-    setCurrentPage(page)
-  }
-
-  if (currentPage === 'sign-in') {
-    return <SignIn />
-  }
-
-  if (currentPage === 'sign-up') {
-    return <SignUp />
-  }
-
-  return <Home />
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/question/:id" element={<QuestionDetails />} />
+      </Routes>
+    </Router>
+  )
 }
 
 export default App
