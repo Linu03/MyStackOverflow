@@ -24,6 +24,8 @@ export interface Question {
     author_id: string;
     is_solved: boolean;
     vote_count: number;
+    upvotes?: number;
+    downvotes?: number;
     created_at: string;
     author: { id: string; username: string } | null;
     question_tags: QuestionTag[];

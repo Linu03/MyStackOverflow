@@ -7,7 +7,7 @@ export default function Navbar() {
 
   const handleSignOut = () => {
     signOut()
-    navigate('/')
+    navigate('/sign-in', { replace: true })
   }
 
   return (
@@ -18,6 +18,9 @@ export default function Navbar() {
       <div className="navbar-actions">
         {isAuthenticated ? (
           <>
+            <Link to="/questions/new" className="navbar-button navbar-button--primary">
+              Ask question
+            </Link>
             <span className="navbar-username">{user?.username}</span>
             <button onClick={handleSignOut} className="navbar-button navbar-button--secondary">
               Sign out

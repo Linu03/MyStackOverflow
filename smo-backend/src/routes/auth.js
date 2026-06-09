@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../supabase');
+const { supabase, createAuthClient } = require('../supabase');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -54,11 +54,11 @@ router.post('/register', async (req, res) => {
         return res.status(500).json({ error: 'Failed to create user profile', details: profileError.message });
     }
 
-    // 5. Logam userul automat ca sa returnam tokenii
-    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+    // 5. Logam userul automat ca sa returnam tokenii (client separat, nu poluam admin-ul)
+    const authClient = createAuthClient();
+    const { data: sessionData, error: signInError } = await authClient.auth.signInWithPassword({
         email,
         password,
-        // username
     });
 
     if (signInError) {
@@ -86,8 +86,9 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'email and password are required' });
     }
 
-    // 2. Autentificam userul prin Supabase Auth
-    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+    // 2. Autentificam userul prin Supabase Auth (client separat)
+    const authClient = createAuthClient();
+    const { data: sessionData, error: signInError } = await authClient.auth.signInWithPassword({
         email,
         password,
     });
@@ -124,7 +125,8 @@ router.post('/refresh', async (req, res) => {
     }
 
     // 2. Obtinem un access_token nou cu refresh_token-ul
-    const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+    const authClient = createAuthClient();
+    const { data, error } = await authClient.auth.refreshSession({ refresh_token });
 
     if (error || !data.session) {
         return res.status(401).json({ error: 'Invalid or expired refresh token' });

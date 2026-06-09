@@ -107,7 +107,7 @@ export const authApi = {
 
 // ─── Questions API ────────────────────────────────────────────────────────────
 
-import type { QuestionSummary, Question } from '../components/types'
+import type { QuestionSummary, Question, Answer } from '../components/types'
 
 export const questionsApi = {
   async getAll(): Promise<QuestionSummary[]> {
@@ -127,6 +127,30 @@ export const questionsApi = {
     return request<Question>('/api/questions', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }, true)
+  },
+
+  async vote(id: string, value: 1 | -1): Promise<{ vote_count: number; upvotes: number; downvotes: number }> {
+    return request<{ vote_count: number; upvotes: number; downvotes: number }>(`/api/questions/${id}/vote`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value }),
+    }, true)
+  },
+}
+
+// ─── Answers API ──────────────────────────────────────────────────────────────
+
+export const answersApi = {
+  async create(questionId: string, body: string): Promise<Answer> {
+    return request<Answer>(`/api/questions/${questionId}/answers`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }, true)
+  },
+
+  async accept(answerId: string): Promise<Answer> {
+    return request<Answer>(`/api/answers/${answerId}/accept`, {
+      method: 'PATCH',
     }, true)
   },
 }

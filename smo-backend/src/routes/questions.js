@@ -3,6 +3,25 @@ const router = express.Router();
 const { supabase } = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
+async function getVoteBreakdown(targetId, targetType) {
+    const { data, error } = await supabase
+        .from('votes')
+        .select('value')
+        .eq('target_id', targetId)
+        .eq('target_type', targetType);
+
+    if (error) throw error;
+
+    let upvotes = 0;
+    let downvotes = 0;
+    for (const vote of data ?? []) {
+        if (vote.value === 1) upvotes++;
+        else if (vote.value === -1) downvotes++;
+    }
+
+    return { upvotes, downvotes };
+}
+
 // GET /api/questions - ruta publica
 // Returneaza lista de intrebari in formatul QuestionSummary asteptat de frontend
 router.get('/', async (req, res) => {
@@ -127,10 +146,22 @@ router.get('/:id', async (req, res) => {
         comments: (answerCommentsRes.data ?? []).filter(c => c.target_id === answer.id),
     }));
 
+    let upvotes = 0;
+    let downvotes = 0;
+    try {
+        const breakdown = await getVoteBreakdown(id, 'question');
+        upvotes = breakdown.upvotes;
+        downvotes = breakdown.downvotes;
+    } catch (breakdownError) {
+        console.error('Vote breakdown error:', breakdownError.message);
+    }
+
     return res.status(200).json({
         ...question,
         answers: answersWithComments,
         comments: questionCommentsRes.data ?? [],
+        upvotes,
+        downvotes,
     });
 });
 
@@ -279,11 +310,74 @@ router.patch('/:id/vote', requireAuth, async (req, res) => {
 
     // 3. Returnam noul vote_count si starea votului curent
     const userVote = existingVote?.value === value ? 0 : value;
+    const vote_count = (current.vote_count ?? 0) + voteDelta;
+
+    let upvotes = 0;
+    let downvotes = 0;
+    try {
+        const breakdown = await getVoteBreakdown(id, 'question');
+        upvotes = breakdown.upvotes;
+        downvotes = breakdown.downvotes;
+    } catch (breakdownError) {
+        console.error('Vote breakdown error:', breakdownError.message);
+    }
 
     return res.status(200).json({
-        vote_count: (current.vote_count ?? 0) + voteDelta,
+        vote_count,
+        upvotes,
+        downvotes,
         user_vote: userVote, // 0 = anulat, 1 = upvote, -1 = downvote
     });
+});
+
+// POST /api/questions/:id/answers - ruta protejata
+router.post('/:id/answers', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const { body } = req.body;
+    const author_id = req.user.id;
+
+    if (!body || typeof body !== 'string' || body.trim() === '') {
+        return res.status(400).json({ error: 'body is required' });
+    }
+
+    // Verificam ca intrebarea exista
+    const { data: question, error: questionError } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+
+    if (questionError) {
+        return res.status(500).json({ error: questionError.message });
+    }
+    if (!question) {
+        return res.status(404).json({ error: 'Question not found' });
+    }
+
+    const { data: answer, error: insertError } = await supabase
+        .from('answers')
+        .insert({
+            question_id: id,
+            author_id,
+            body: body.trim(),
+        })
+        .select(`
+            id,
+            body,
+            question_id,
+            author_id,
+            vote_count,
+            is_accepted,
+            created_at,
+            author:profiles!author_id ( id, username )
+        `)
+        .single();
+
+    if (insertError) {
+        return res.status(500).json({ error: insertError.message });
+    }
+
+    return res.status(201).json({ ...answer, comments: [] });
 });
 
 module.exports = router;
