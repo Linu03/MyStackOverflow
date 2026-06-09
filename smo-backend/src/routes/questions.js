@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { supabase } = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
+const companionQueue = require('../services/companionQueue');
 
 async function getVoteBreakdown(targetId, targetType) {
     const { data, error } = await supabase
@@ -72,6 +73,7 @@ router.get('/:id', async (req, res) => {
             title,
             description,
             author_id,
+            allow_ai_companion,
             is_solved,
             vote_count,
             created_at,
@@ -91,6 +93,7 @@ router.get('/:id', async (req, res) => {
                 author_id,
                 vote_count,
                 is_accepted,
+                is_ai_generated,
                 created_at,
                 author:profiles!author_id (
                     id,
@@ -167,7 +170,7 @@ router.get('/:id', async (req, res) => {
 
 
 router.post('/', requireAuth, async (req, res) => {
-    const { title, description, tags } = req.body;
+    const { title, description, tags, allow_ai_companion } = req.body;
     const author_id = req.user.id; // vine din token, nu din body
 
     // Validare campuri obligatorii
@@ -191,8 +194,9 @@ router.post('/', requireAuth, async (req, res) => {
                 title: title.trim(),
                 description: description.trim(),
                 author_id,
+                allow_ai_companion: allow_ai_companion !== false,
             })
-        .select('id, title, description, is_solved, vote_count, created_at, author_id')
+        .select('id, title, description, allow_ai_companion, is_solved, vote_count, created_at, author_id')
         .single();
 
     if (questionError) {
@@ -227,6 +231,10 @@ router.post('/', requireAuth, async (req, res) => {
         if (linkError) {
             return res.status(500).json({ error: 'Failed to link tags to question' });
         }
+    }
+
+    if (question.allow_ai_companion) {
+        companionQueue.enqueue(question.id);
     }
 
     return res.status(201).json({ ...question, question_tags: tagList.map(name => ({ tag: { name } })) });

@@ -232,6 +232,73 @@
   margin-top: 0.5rem;
 }
 
+.title-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.title-row .form-input {
+  flex: 1;
+}
+
+.generate-tags-button {
+  flex-shrink: 0;
+  padding: 0 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.generate-tags-button:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
+.generate-tags-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.duplicate-warning {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: rgba(139, 94, 43, 0.08);
+  border: 1px solid rgba(139, 94, 43, 0.2);
+}
+
+.duplicate-warning p {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.duplicate-warning ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.duplicate-warning li {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.duplicate-warning a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.duplicate-warning a:hover {
+  text-decoration: underline;
+}
+
 .field-error {
   margin: 0;
   font-size: 0.85rem;
@@ -670,6 +737,35 @@
 .accept-answer-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.answer--ai {
+  border-color: rgba(10, 122, 120, 0.35);
+  background: rgba(10, 122, 120, 0.04);
+}
+
+.companion-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+}
+
+.companion-toggle input {
+  accent-color: var(--accent);
+}
+
+.companion-waiting {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: rgba(10, 122, 120, 0.08);
+  border: 1px solid rgba(10, 122, 120, 0.2);
+  font-size: 0.9rem;
+  color: var(--accent);
 }
 
 .answer--accepted {

@@ -22,6 +22,7 @@ export interface Question {
     title: string;
     description: string;
     author_id: string;
+    allow_ai_companion?: boolean;
     is_solved: boolean;
     vote_count: number;
     upvotes?: number;
@@ -40,6 +41,7 @@ export interface Answer {
     author_id: string;
     vote_count: number;
     is_accepted: boolean;
+    is_ai_generated?: boolean;
     created_at: string;
     author: { id: string; username: string } | null;
     comments: Comment[];

@@ -140,6 +140,34 @@ export const questionsApi = {
 
 // ─── Answers API ──────────────────────────────────────────────────────────────
 
+// ─── AI API ───────────────────────────────────────────────────────────────────
+
+export const aiApi = {
+  async suggestTags(title: string): Promise<{ tags: string[] }> {
+    return request<{ tags: string[] }>('/api/ai/tags', {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+    })
+  },
+
+  async health(): Promise<{ ok: boolean; rateLimited?: boolean }> {
+    return request<{ ok: boolean; rateLimited?: boolean }>('/api/ai/health')
+  },
+
+  async checkDuplicate(title: string): Promise<{
+    isDuplicate: boolean
+    duplicateId: string | null
+    matches: { id: string; title: string }[]
+  }> {
+    return request('/api/ai/check-duplicate', {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+    })
+  },
+}
+
+// ─── Answers API ──────────────────────────────────────────────────────────────
+
 export const answersApi = {
   async create(questionId: string, body: string): Promise<Answer> {
     return request<Answer>(`/api/questions/${questionId}/answers`, {

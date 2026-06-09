@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import TagPill from '../components/tagPill'
-import { questionsApi } from '../lib/api'
+import { questionsApi, aiApi } from '../lib/api'
 
 function normalizeTag(raw: string) {
   return raw.trim().toLowerCase().replace(/\s+/g, '-')
@@ -17,7 +17,34 @@ export default function AskQuestion() {
   const [descriptionError, setDescriptionError] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [generatingTags, setGeneratingTags] = useState(false)
+  const [aiDisabled, setAiDisabled] = useState(true)
+  const [duplicates, setDuplicates] = useState<{ id: string; title: string }[]>([])
+  const [allowAiCompanion, setAllowAiCompanion] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    aiApi.health()
+      .then((health) => {
+        setAiDisabled(!(health.ok && !health.rateLimited))
+      })
+      .catch(() => setAiDisabled(true))
+  }, [])
+
+  useEffect(() => {
+    if (title.trim().length < 10) {
+      setDuplicates([])
+      return
+    }
+
+    const timer = setTimeout(() => {
+      aiApi.checkDuplicate(title.trim())
+        .then((result) => setDuplicates(result.matches ?? []))
+        .catch(() => setDuplicates([]))
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [title])
 
   function addTag(raw: string) {
     const normalized = normalizeTag(raw)
@@ -36,6 +63,33 @@ export default function AskQuestion() {
 
   function removeTag(name: string) {
     setTags(tags.filter((t) => t !== name))
+  }
+
+  function mergeTags(suggested: string[]) {
+    const merged = [...tags]
+    for (const raw of suggested) {
+      const normalized = normalizeTag(raw)
+      if (!normalized || merged.includes(normalized)) continue
+      merged.push(normalized)
+    }
+    setTags(merged)
+  }
+
+  async function handleGenerateTags() {
+    if (!title.trim() || aiDisabled) return
+
+    setGeneratingTags(true)
+    try {
+      const { tags: suggested } = await aiApi.suggestTags(title.trim())
+      mergeTags(suggested)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : ''
+      if (message.includes('groq_rate_limited') || message.includes('429')) {
+        setAiDisabled(true)
+      }
+    } finally {
+      setGeneratingTags(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -70,6 +124,7 @@ export default function AskQuestion() {
         title: title.trim(),
         description: description.trim(),
         tags,
+        allow_ai_companion: allowAiCompanion,
       })
       navigate(`/question/${question.id}`, { replace: true })
     } catch (err: unknown) {
@@ -96,15 +151,39 @@ export default function AskQuestion() {
 
             <div className="form-group">
               <label htmlFor="title" className="form-label">Title</label>
-              <input
-                id="title"
-                type="text"
-                className="form-input"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What's your question?"
-              />
+              <div className="title-row">
+                <input
+                  id="title"
+                  type="text"
+                  className="form-input"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="What's your question?"
+                />
+                {!aiDisabled && (
+                  <button
+                    type="button"
+                    className="generate-tags-button"
+                    onClick={handleGenerateTags}
+                    disabled={!title.trim() || generatingTags}
+                  >
+                    {generatingTags ? 'Generating tags...' : '✦ Generate tags'}
+                  </button>
+                )}
+              </div>
               {titleError && <p className="field-error">{titleError}</p>}
+              {duplicates.length > 0 && (
+                <div className="duplicate-warning">
+                  <p>Similar questions already asked:</p>
+                  <ul>
+                    {duplicates.map((match) => (
+                      <li key={match.id}>
+                        <Link to={`/question/${match.id}`}>{match.title}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="form-group">
@@ -143,6 +222,15 @@ export default function AskQuestion() {
                 </div>
               )}
             </div>
+
+            <label className="companion-toggle">
+              <input
+                type="checkbox"
+                checked={allowAiCompanion}
+                onChange={(e) => setAllowAiCompanion(e.target.checked)}
+              />
+              Allow AI to answer if it thinks it can help
+            </label>
 
             <button type="submit" className="form-button" disabled={isSubmitting}>
               {isSubmitting ? 'Posting...' : 'Post your question'}

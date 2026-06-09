@@ -30,6 +30,23 @@ export default function QuestionDetails() {
       .finally(() => setIsLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (!id || !question?.allow_ai_companion) return
+    const hasAiAnswer = question.answers.some((a) => a.is_ai_generated)
+    if (hasAiAnswer || question.is_solved) return
+
+    const interval = setInterval(() => {
+      questionsApi.getById(id).then(setQuestion).catch(() => {})
+    }, 5000)
+
+    const timeout = setTimeout(() => clearInterval(interval), 60000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
+  }, [id, question?.allow_ai_companion, question?.is_solved, question?.answers.length])
+
   async function handleSubmitAnswer(e: React.FormEvent) {
     e.preventDefault()
     if (!id) return
@@ -197,17 +214,30 @@ export default function QuestionDetails() {
             </p>
           )}
 
+          {question.allow_ai_companion &&
+            !question.is_solved &&
+            !question.answers.some((a) => a.is_ai_generated) && (
+            <p className="companion-waiting">AI Companion is working on an answer…</p>
+          )}
+
           {question.answers.length > 0 ? (
             <div className="answers-list">
               {question.answers.map(answer => (
                 <div
                   key={answer.id}
-                  className={answer.is_accepted ? 'answer answer--accepted' : 'answer'}
+                  className={
+                    answer.is_accepted
+                      ? 'answer answer--accepted'
+                      : answer.is_ai_generated
+                        ? 'answer answer--ai'
+                        : 'answer'
+                  }
                 >
                   <div className="answer-header">
                     <div className="answer-meta">
                       <span className="answer-author">{answer.author?.username ?? 'anonymous'}</span>
                       <span className="answer-date">{new Date(answer.created_at).toLocaleDateString()}</span>
+                      {answer.is_ai_generated && <span className="ai-badge">AI Generated</span>}
                       {answer.is_accepted && <span className="accepted-badge">Accepted Answer</span>}
                     </div>
                     <div className="answer-votes">
