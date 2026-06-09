@@ -1,22 +1,22 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import { useAuth } from '../hooks/useAuth'
 
 export default function SignIn() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const { signIn, isLoading, error, clearError } = useAuth()
+  const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    clearError()
 
-    if (!username || !password) {
-      setError('Please fill in all fields')
-      return
-    }
+    if (!email || !password) return
 
-    console.log('Sign in attempt:', { username, password })
-    // alert(`Signed in as ${username}`)
+    const success = await signIn(email, password)
+    if (success) navigate('/', { replace: true })
   }
 
   return (
@@ -34,23 +34,20 @@ export default function SignIn() {
             {error && <div className="form-error">{error}</div>}
 
             <div className="form-group">
-              <label htmlFor="username" className="form-label">
-                Username
-              </label>
+              <label htmlFor="email" className="form-label">Email</label>
               <input
-                id="username"
-                type="text"
+                id="email"
+                type="email"
                 className="form-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
+              <label htmlFor="password" className="form-label">Password</label>
               <input
                 id="password"
                 type="password"
@@ -58,20 +55,19 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                required
               />
             </div>
 
-            <button type="submit" className="form-button">
-              Sign In
+            <button type="submit" className="form-button" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <footer className="auth-footer">
             <p>
               Don't have an account?{' '}
-              <a href="/sign-up" className="auth-link">
-                Sign up
-              </a>
+              <a href="/sign-up" className="auth-link">Sign up</a>
             </p>
           </footer>
         </div>
