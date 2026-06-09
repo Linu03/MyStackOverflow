@@ -1,21 +1,23 @@
-import questions from '../mockData'
-import TagPill from '../components/tagPill'
+import { useState, useEffect } from 'react'
+import { questionsApi } from '../lib/api'
 import QuestionCard from '../components/QuestionCard'
 import Navbar from '../components/Navbar'
 import type { QuestionSummary } from '../components/types'
 
 export default function Home() {
-  // Convert questions to QuestionSummary format
-  const questionSummaries: QuestionSummary[] = questions.map(question => ({
-    id: question.id,
-    title: question.title,
-    is_solved: question.is_solved,
-    vote_count: question.vote_count,
-    created_at: question.created_at,
-    author: question.author,
-    question_tags: question.question_tags,
-    answer_count: question.answers.length
-  }))
+  const [questions, setQuestions] = useState<QuestionSummary[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    questionsApi.getAll()
+      .then(setQuestions)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load questions'
+        setError(message)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   return (
     <main className="app-container">
@@ -27,7 +29,12 @@ export default function Home() {
       </header>
 
       <section className="question-list">
-        {questionSummaries.map((question) => (
+        {isLoading && <p>Loading questions...</p>}
+        {error && <p className="form-error">{error}</p>}
+        {!isLoading && !error && questions.length === 0 && (
+          <p>No questions yet. Be the first to ask!</p>
+        )}
+        {questions.map((question) => (
           <QuestionCard key={question.id} question={question} />
         ))}
       </section>

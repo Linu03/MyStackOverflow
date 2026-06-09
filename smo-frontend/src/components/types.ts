@@ -2,10 +2,9 @@ export interface Tag {
     name: string;
 }
 
-export interface QuestionTag{
+export interface QuestionTag {
     tag: Tag;
 }
-
 
 export interface QuestionSummary {
     id: string;
@@ -13,11 +12,10 @@ export interface QuestionSummary {
     is_solved: boolean;
     vote_count: number;
     created_at: string;
-    author:  {id: string; username: string} | null;
+    author: { id: string; username: string } | null;
     question_tags: QuestionTag[];
     answer_count: number;
 }
-
 
 export interface Question {
     id: string;
@@ -25,7 +23,6 @@ export interface Question {
     description: string;
     author_id: string;
     is_solved: boolean;
-    allow_ai_companion: boolean;
     vote_count: number;
     created_at: string;
     author: { id: string; username: string } | null;
@@ -34,16 +31,15 @@ export interface Question {
     comments: Comment[];
 }
 
-export interface Answer{
+export interface Answer {
     id: string;
     body: string;
     question_id: string;
     author_id: string;
     vote_count: number;
     is_accepted: boolean;
-    is_ai_generated: boolean;
     created_at: string;
-    author: {id: string; username: string} | null;
+    author: { id: string; username: string } | null;
     comments: Comment[];
 }
 
@@ -53,5 +49,5 @@ export interface Comment {
     target_id: string;
     target_type: 'question' | 'answer';
     created_at: string;
-    author: {username: string} | null;
+    author: { username: string } | null;
 }

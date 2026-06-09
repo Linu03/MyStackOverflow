@@ -1,28 +1,43 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Question } from '../components/types'
-import questions from '../mockData'
+import { questionsApi } from '../lib/api'
 import Navbar from '../components/Navbar'
 import TagPill from '../components/tagPill'
 
 export default function QuestionDetails() {
   const { id } = useParams<{ id: string }>()
   const [question, setQuestion] = useState<Question | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (id) {
-      const foundQuestion = questions.find(q => q.id === id)
-      setQuestion(foundQuestion || null)
-    }
+    if (!id) return
+    questionsApi.getById(id)
+      .then(setQuestion)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load question'
+        setError(message)
+      })
+      .finally(() => setIsLoading(false))
   }, [id])
 
-  if (!question) {
+  if (isLoading) {
+    return (
+      <main className="app-container">
+        <Navbar />
+        <p>Loading...</p>
+      </main>
+    )
+  }
+
+  if (error || !question) {
     return (
       <main className="app-container">
         <Navbar />
         <div className="question-not-found">
           <h1>Question not found</h1>
-          <p>The question you're looking for doesn't exist.</p>
+          <p>{error ?? "The question you're looking for doesn't exist."}</p>
         </div>
       </main>
     )
@@ -87,7 +102,6 @@ export default function QuestionDetails() {
                       <span className="answer-author">{answer.author?.username ?? 'anonymous'}</span>
                       <span className="answer-date">{new Date(answer.created_at).toLocaleDateString()}</span>
                       {answer.is_accepted && <span className="accepted-badge">Accepted Answer</span>}
-                      {answer.is_ai_generated && <span className="ai-badge">AI Generated</span>}
                     </div>
                     <div className="answer-votes">
                       <span>{answer.vote_count} votes</span>

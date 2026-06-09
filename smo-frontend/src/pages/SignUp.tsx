@@ -1,34 +1,35 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import { useAuth } from '../hooks/useAuth'
 
 export default function SignUp() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [localError, setLocalError] = useState('')
+  const { signUp, isLoading, error, clearError } = useAuth()
+  const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setLocalError('')
+    clearError()
 
     if (!username || !email || !password) {
-      setError('Please fill in all fields')
+      setLocalError('Please fill in all fields')
       return
     }
-
-    if (!email.includes('@')) {
-      setError('Please enter a valid email')
-      return
-    }
-
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setLocalError('Password must be at least 6 characters')
       return
     }
 
-    console.log('Sign up attempt:', { username, email, password })
-    alert(`Account created for ${username}`)
+    const success = await signUp(username, email, password)
+    if (success) navigate('/', { replace: true })
   }
+
+  const displayError = localError || error
 
   return (
     <main className="app-container">
@@ -42,12 +43,10 @@ export default function SignUp() {
           </header>
 
           <form onSubmit={handleSubmit} className="auth-form">
-            {error && <div className="form-error">{error}</div>}
+            {displayError && <div className="form-error">{displayError}</div>}
 
             <div className="form-group">
-              <label htmlFor="username" className="form-label">
-                Username
-              </label>
+              <label htmlFor="username" className="form-label">Username</label>
               <input
                 id="username"
                 type="text"
@@ -55,13 +54,12 @@ export default function SignUp() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Choose a username"
+                required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
+              <label htmlFor="email" className="form-label">Email</label>
               <input
                 id="email"
                 type="email"
@@ -69,13 +67,12 @@ export default function SignUp() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
+              <label htmlFor="password" className="form-label">Password</label>
               <input
                 id="password"
                 type="password"
@@ -83,20 +80,19 @@ export default function SignUp() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password (min 6 chars)"
+                required
               />
             </div>
 
-            <button type="submit" className="form-button">
-              Sign Up
+            <button type="submit" className="form-button" disabled={isLoading}>
+              {isLoading ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
 
           <footer className="auth-footer">
             <p>
               Already have an account?{' '}
-              <a href="/sign-in" className="auth-link">
-                Sign in
-              </a>
+              <a href="/sign-in" className="auth-link">Sign in</a>
             </p>
           </footer>
         </div>

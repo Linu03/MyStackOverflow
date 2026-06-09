@@ -58,6 +58,33 @@ Everything runs **without a backend** — static data in the frontend.
 | TypeScript | — |
 | Vite | 8 |
 | React Router | 7 |
+| Supabase (`@supabase/supabase-js`) | 2 |
+
+---
+
+## Supabase
+
+The frontend uses the [Supabase JS client](https://supabase.com/docs/reference/javascript/introduction) for auth, database, and storage (as you wire features in).
+
+### Setup
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Copy `smo-frontend/.env.example` to `smo-frontend/.env`.
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from **Project Settings → API** (use the anon / publishable key, not the service role key).
+
+Restart the dev server after changing `.env`.
+
+### Usage
+
+Import the shared client anywhere:
+
+```ts
+import { supabase } from './lib/supabase'
+
+const { data, error } = await supabase.from('questions').select('*')
+```
+
+Client singleton: `smo-frontend/src/lib/supabase.ts`.
 
 ---
 
@@ -68,6 +95,12 @@ Everything runs **without a backend** — static data in the frontend.
 - [Node.js](https://nodejs.org/) 18+ (20+ recommended)
 - npm
 
+```bash
+cd smo-frontend
+cp .env.example .env   # then fill in your Supabase keys
+npm install
+npm run dev
+```
 
 Open the URL shown in the terminal (usually `http://localhost:5173`).
 
@@ -91,6 +124,8 @@ liga-aclabs/
         │   ├── QuestionCard.tsx
         │   ├── tagPill.tsx
         │   └── types.ts
+        ├── lib/
+        │   └── supabase.ts      # Supabase client
         └── hooks/
             └── useAuth.ts       # mock auth (localStorage)
 ```
